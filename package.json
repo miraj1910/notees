@@ -1,0 +1,54 @@
+{
+  "name": "blackline-notes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prebuild": "node scripts/generate-config.mjs",
+    "build": "next build",
+    "predev": "node scripts/generate-config.mjs",
+    "dev": "next dev --port 3000",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.css": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "browser-sync": "^3.0.0",
+    "concurrently": "^10.0.3",
+    "eslint": "^9.0.0",
+    "http-server": "^14.1.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "pino-pretty": "^13.1.3",
+    "postcss": "^8.5.15",
+    "prettier": "^3.0.0",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "next": "^16.2.9",
+    "pino": "^10.3.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  }
+}
