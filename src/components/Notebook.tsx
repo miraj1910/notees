@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -52,7 +52,7 @@ export default function Notebook() {
     content: "",
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none min-h-[280px]",
+        class: "prose prose-sm max-w-none focus:outline-none min-h-[180px] lg:min-h-[280px]",
       },
     },
     onUpdate: () => {
@@ -101,14 +101,14 @@ export default function Notebook() {
 
   return (
     <motion.div
-      className="relative flex-1 h-full flex items-center justify-center pl-[16px]"
+      className="relative flex-1 h-full flex items-center justify-center pl-0 lg:pl-[16px] overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       {/* Leather Cover */}
       <motion.div
-        className="relative w-full max-w-[780px] h-[calc(100%-8px)] max-h-[800px] rounded-[18px] flex flex-col overflow-hidden z-[5]"
+        className="relative w-full h-full lg:h-[calc(100%-8px)] lg:max-h-[800px] rounded-none lg:rounded-[18px] flex flex-col overflow-hidden z-[5] lg:mx-0"
         style={{
           background: [
             "repeating-linear-gradient(90deg, transparent 0px, transparent 3px, rgba(0,0,0,0.012) 3px, rgba(0,0,0,0.012) 4px)",
@@ -127,9 +127,9 @@ export default function Notebook() {
         animate={{ scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        {/* Decorative stitch */}
+        {/* Decorative stitch - hide on mobile */}
         <div
-          className="absolute inset-[10px] rounded-[12px] pointer-events-none z-[6]"
+          className="absolute inset-[10px] rounded-[12px] pointer-events-none z-[6] max-lg:hidden"
           style={{
             border: "1.5px dashed rgba(220,200,180,0.12)",
           }}
@@ -137,7 +137,7 @@ export default function Notebook() {
 
         {/* Bevel highlight */}
         <div
-          className="absolute inset-0 rounded-[18px] pointer-events-none z-[7]"
+          className="absolute inset-0 rounded-none lg:rounded-[18px] pointer-events-none z-[7]"
           style={{
             background:
               "linear-gradient(145deg, rgba(255,255,255,0.04) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.08) 100%)",
@@ -146,7 +146,7 @@ export default function Notebook() {
 
         {/* Paper */}
         <div
-          className="relative mx-[14px] my-[14px] flex-1 rounded-[3px] overflow-hidden z-[5] flex flex-col"
+          className="relative mx-0 lg:mx-[14px] my-0 lg:my-[14px] flex-1 rounded-none lg:rounded-[3px] overflow-hidden z-[5] flex flex-col"
           style={{
             background: "#F8F2E7",
             boxShadow: [
@@ -175,7 +175,7 @@ export default function Notebook() {
           <PaperLines />
 
           {/* Content */}
-          <div className="relative z-[4] flex-1 flex flex-col px-[70px] py-[40px] overflow-y-auto">
+          <div className="relative z-[4] flex-1 flex flex-col px-[24px] sm:px-[40px] lg:px-[70px] py-[16px] sm:py-[24px] lg:py-[40px] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between flex-shrink-0 mb-[6px] min-h-[24px]">
               <time
@@ -191,18 +191,18 @@ export default function Notebook() {
                     style={{ background: statusColor, boxShadow: statusGlow }}
                   />
                   <span
-                    className="text-[10px] tracking-wide"
+                    className="text-[10px] tracking-wide hidden sm:inline"
                     style={{ color: "rgba(122,111,103,0.45)", fontFamily: "'IBM Plex Mono', monospace" }}
                   >
                     {saveStatus}
                   </span>
                 </div>
                 <motion.button
-                  className="w-[24px] h-[24px] rounded-[6px] flex items-center justify-center text-[rgba(122,111,103,0.35)] hover:text-[rgba(122,111,103,0.6)] hover:bg-[rgba(0,0,0,0.03)]"
+                  className="w-[32px] h-[32px] lg:w-[24px] lg:h-[24px] rounded-[8px] flex items-center justify-center text-[rgba(122,111,103,0.35)] hover:text-[rgba(122,111,103,0.6)] hover:bg-[rgba(0,0,0,0.03)]"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <MoreHorizontal size={14} />
+                  <MoreHorizontal size={16} />
                 </motion.button>
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function Notebook() {
               {!isEmpty ? (
                 <div className="flex-1 flex flex-col">
                   <input
-                    className="w-full bg-transparent border-none outline-none font-['Caveat',cursive] text-[42px] font-bold leading-[1.2] tracking-[-0.02em] p-0 mb-[8px]"
+                    className="w-full bg-transparent border-none outline-none font-['Caveat',cursive] text-[30px] sm:text-[36px] lg:text-[42px] font-bold leading-[1.2] tracking-[-0.02em] p-0 mb-[6px] lg:mb-[8px]"
                     style={{ color: "#2F2923" }}
                     placeholder="Untitled"
                     defaultValue={activeNote?.title || ""}
@@ -232,11 +232,10 @@ export default function Notebook() {
                       }
                     }}
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 relative">
                     <EditorContent
                       editor={editor}
                       className="w-full h-full"
-                      style={{ fontFamily: "'Caveat', cursive", fontSize: "19px", lineHeight: "1.8", color: "#2F2923" }}
                     />
                   </div>
                 </div>
@@ -245,10 +244,10 @@ export default function Notebook() {
                   <div className="w-[44px] h-[44px] rounded-full bg-[rgba(182,120,66,0.07)] flex items-center justify-center mb-[12px]">
                     <Save size={18} style={{ color: "#B67842" }} />
                   </div>
-                  <p className="text-[26px] font-semibold" style={{ color: "rgba(45,45,45,0.35)" }}>
+                  <p className="text-[22px] lg:text-[26px] font-semibold" style={{ color: "rgba(45,45,45,0.35)" }}>
                     Select a note
                   </p>
-                  <p className="text-[18px]" style={{ color: "rgba(122,111,103,0.3)" }}>
+                  <p className="text-[16px] lg:text-[18px]" style={{ color: "rgba(122,111,103,0.3)" }}>
                     or create a new one
                   </p>
                 </div>

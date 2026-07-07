@@ -65,13 +65,21 @@
 /* TipTap Styles */
 .ProseMirror {
   outline: none;
-  min-height: 250px;
+  min-height: 180px;
   word-wrap: break-word;
   white-space: pre-wrap;
   font-family: "Caveat", cursive;
-  font-size: 19px;
-  line-height: 1.8;
+  font-size: 18px;
+  line-height: 1.85;
   color: #2F2923;
+}
+
+@media (min-width: 640px) {
+  .ProseMirror {
+    font-size: 19px;
+    line-height: 1.8;
+    min-height: 250px;
+  }
 }
 
 .ProseMirror p {
@@ -88,12 +96,18 @@
 
 .ProseMirror h2 {
   font-family: "Caveat", cursive;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   margin: 0.8em 0 0.3em;
   text-decoration: underline;
   text-underline-offset: 4px;
   text-decoration-thickness: 2px;
+}
+
+@media (min-width: 640px) {
+  .ProseMirror h2 {
+    font-size: 28px;
+  }
 }
 
 .ProseMirror ul,
@@ -167,26 +181,33 @@
 .ProseMirror ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin: 4px 0;
+  gap: 10px;
+  margin: 6px 0;
 }
 
 .ProseMirror ul[data-type="taskList"] li > label {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 2px solid #555;
   border-radius: 3px;
   cursor: pointer;
   position: relative;
   background: transparent;
   flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
@@ -197,11 +218,18 @@
 .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
   content: "✓";
   position: absolute;
-  top: -2px;
+  top: -3px;
   left: 1px;
-  font-size: 12px;
+  font-size: 14px;
   color: white;
   font-weight: bold;
+}
+
+@media (min-width: 640px) {
+  .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+    top: -2px;
+    font-size: 12px;
+  }
 }
 
 .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div > p {
@@ -221,15 +249,21 @@
 }
 
 .ProseMirror .ProseMirror-cursor {
-  border-left: 2px solid #2F2923;
+  border-left: 2.5px solid #2F2923;
 }
 
 /* TipTap heading overrides */
 .ProseMirror h2 {
   font-family: "Caveat", cursive;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: #2F2923;
+}
+
+@media (min-width: 640px) {
+  .ProseMirror h2 {
+    font-size: 28px;
+  }
 }
 
 /* Colored headings */
@@ -237,7 +271,6 @@
   text-decoration-color: #8E6D4F;
 }
 
-/* Demo content specific styles */
 .ProseMirror h2:nth-of-type(2) {
   text-decoration-color: #C04B3C;
 }
@@ -246,8 +279,22 @@
   text-decoration-color: #4A7DB4;
 }
 
-@media (max-width: 768px) {
-  .ProseMirror {
-    font-size: 17px;
+/* Safe area padding for mobile */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
   }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Hide scrollbar for toolbar on mobile */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

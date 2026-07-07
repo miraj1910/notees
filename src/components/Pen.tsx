@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export default function Pen() {
   return (
     <motion.div
-      className="absolute right-[-18px] bottom-[60px] z-20 flex flex-col items-center pointer-events-none"
+      className="absolute right-[-18px] bottom-[60px] z-20 flex flex-col items-center pointer-events-none max-lg:hidden"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 1, duration: 0.5, ease: "easeOut" }}

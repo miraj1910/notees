@@ -5,21 +5,45 @@ import { AnimatePresence, motion } from "framer-motion";
 import LoginScreen from "@/components/LoginScreen";
 import Sidebar from "@/components/Sidebar";
 import Notebook from "@/components/Notebook";
+import TopAppBar from "@/components/TopAppBar";
+import BottomNav from "@/components/BottomNav";
+import Drawer from "@/components/Drawer";
+import FAB from "@/components/FAB";
 
 function AppLayout() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   return (
     <motion.div
-      className="relative flex items-start w-[95vw] h-[94vh] rounded-[22px] overflow-hidden z-10"
+      className="relative w-full h-dvh h-screen flex flex-col lg:flex-row overflow-hidden z-10 lg:w-[95vw] lg:h-[94vh] lg:rounded-[22px]"
       style={{
-        boxShadow: "0 30px 80px rgba(0,0,0,0.22)",
         background: "#F8F5F1",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.22)",
       }}
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <Sidebar />
-      <Notebook />
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block h-full">
+        <Sidebar />
+      </div>
+
+      {/* Mobile layout */}
+      <div className="flex flex-col flex-1 min-h-0 lg:hidden">
+        <TopAppBar onMenuClick={() => setDrawerOpen(true)} />
+        <div className="flex-1 overflow-hidden">
+          <Notebook />
+        </div>
+        <BottomNav />
+        <FAB />
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      </div>
+
+      {/* Desktop notebook */}
+      <div className="hidden lg:flex flex-1 min-h-0">
+        <Notebook />
+      </div>
     </motion.div>
   );
 }

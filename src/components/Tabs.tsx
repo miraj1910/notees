@@ -12,7 +12,7 @@ const tabs = [
 
 export default function Tabs() {
   return (
-    <div className="absolute right-[-12px] top-1/2 -translate-y-1/2 z-20 flex flex-col gap-[3px] pointer-events-none">
+    <div className="absolute right-[-12px] top-1/2 -translate-y-1/2 z-20 flex flex-col gap-[3px] pointer-events-none max-lg:hidden">
       {tabs.map((tab, i) => (
         <motion.div
           key={tab.label}

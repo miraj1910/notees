@@ -14,10 +14,21 @@ export default function PaperLines() {
           "repeating-linear-gradient(transparent 0px, transparent 30px, #D8DDE7 30px, #D8DDE7 31px)",
       }}
     >
+      {/* Desktop margin line */}
       <div
-        className="absolute top-0 bottom-0 w-[1.5px] pointer-events-none"
+        className="hidden sm:block absolute top-0 bottom-0 w-[1.5px] pointer-events-none"
         style={{
           left: "80px",
+          background:
+            "linear-gradient(180deg, rgba(228,170,160,0.4) 0%, rgba(228,170,160,0.2) 100%)",
+        }}
+      />
+
+      {/* Mobile margin line */}
+      <div
+        className="sm:hidden absolute top-0 bottom-0 w-[1.5px] pointer-events-none"
+        style={{
+          left: "44px",
           background:
             "linear-gradient(180deg, rgba(228,170,160,0.4) 0%, rgba(228,170,160,0.2) 100%)",
         }}
