@@ -1,25 +1,23 @@
 "use client";
 
-import { useNotes } from "@/components/NotesProvider";
+import { EditorContent, type Editor } from "@tiptap/react";
 import NoteTitle from "./NoteTitle";
 
-export default function EditorCanvas() {
-  const { contentRef, onContentChange, activeNote } = useNotes();
+interface EditorCanvasProps {
+  editor: Editor | null;
+}
+
+export default function EditorCanvas({ editor }: EditorCanvasProps) {
+  if (!editor) return null;
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="notebook-editor">
       <NoteTitle />
-
-      <div className="relative flex-1 flex mt-4">
-        <textarea
-          ref={contentRef}
-          id="note-content"
-          className="w-full h-full bg-transparent border-none outline-none resize-none text-[#2D2623] text-[16px] leading-[1.85] font-sans placeholder:text-[#7A6F67]/40"
-          placeholder="Start writing..."
-          defaultValue={activeNote?.content || ""}
-          onInput={onContentChange}
+      <div className="relative flex-1 flex">
+        <EditorContent
+          editor={editor}
+          className="w-full h-full"
           aria-label="Note content"
-          style={{ minHeight: "20rem" }}
         />
       </div>
     </div>

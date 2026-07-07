@@ -37,6 +37,8 @@ class NotesService {
         id: file.id,
         title: file.name || DEFAULT_TITLE,
         content: null,
+        createdAt: file.createdTime || new Date().toISOString(),
+        updatedAt: file.modifiedTime || new Date().toISOString(),
       }));
       cacheService.setNotes(notes);
       this.onNotesChanged?.();
@@ -111,11 +113,14 @@ class NotesService {
     this.onStatus?.("Creating...");
 
     const tempId = `${TEMP_PREFIX}${Date.now()}`;
+    const now = new Date().toISOString();
     appState.currentNoteId = tempId;
     cacheService.addOptimistic({
       id: tempId,
       title: DEFAULT_TITLE,
       content: "",
+      createdAt: now,
+      updatedAt: now,
     });
 
     this.onEditorLoading?.(false);
@@ -152,7 +157,10 @@ class NotesService {
 
     try {
       await driveService.saveNoteContent(id, payload);
-      cacheService.updateNote(id, payload);
+      cacheService.updateNote(id, {
+        ...payload,
+        updatedAt: new Date().toISOString(),
+      });
       this.onStatus?.("Saved");
     } catch (error) {
       logger.error(error);

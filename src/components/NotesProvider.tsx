@@ -9,6 +9,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import type { Editor } from "@tiptap/react";
 import type { Note } from "@/types/note";
 import { appState } from "@/state/app-state";
 import { DEFAULT_TITLE, DEBOUNCE_MS } from "@/config/constants";
@@ -16,6 +17,7 @@ import { notesService } from "@/services/notes.service";
 import { authService } from "@/services/auth.service";
 import { cacheService } from "@/services/cache.service";
 import { confirmDelete } from "@/ui/dialogs";
+import { isTemporaryNoteId } from "@/utils/validation";
 
 interface ActiveNote {
   title: string;
@@ -32,7 +34,7 @@ interface NotesContextValue {
   noteLoading: boolean;
   authError: string;
   titleRef: React.RefObject<HTMLInputElement | null>;
-  contentRef: React.RefObject<HTMLTextAreaElement | null>;
+  editorRef: React.MutableRefObject<Editor | null>;
   login: () => void;
   createNote: () => Promise<void>;
   openNote: (id: string) => void;
@@ -54,13 +56,13 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   const [activeNote, setActiveNote] = useState<ActiveNote | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [saveStatus, setSaveStatus] = useState("");
+  const [saveStatus, setSaveStatus] = useState("Ready");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [noteLoading, setNoteLoading] = useState(false);
   const [authError, setAuthError] = useState("");
 
   const titleRef = useRef<HTMLInputElement | null>(null);
-  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  const editorRef = useRef<Editor | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync appState -> React state
@@ -157,11 +159,67 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     syncFromAppState();
   }, [syncFromAppState]);
 
+  const performSave = useCallback(async () => {
+    const id = appState.currentNoteId;
+    if (!id || isTemporaryNoteId(id)) {
+      setSaveStatus("Saved");
+      return;
+    }
+
+    const title = titleRef.current?.value || DEFAULT_TITLE;
+    const content = editorRef.current?.getHTML() || "";
+
+    setSaveStatus("Saving...");
+
+    try {
+      await notesService.save({ title, content });
+      syncFromAppState();
+      setSaveStatus("Saved");
+    } catch {
+      setSaveStatus("Error Saving");
+    }
+  }, [syncFromAppState]);
+
+  const scheduleSave = useCallback(() => {
+    if (saveTimerRef.current !== null) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    const currentId = appState.currentNoteId;
+    const draftTitle = titleRef.current?.value || DEFAULT_TITLE;
+    const draftContent = editorRef.current?.getHTML() || "";
+
+    cacheService.updateNote(currentId, {
+      title: draftTitle,
+      content: draftContent,
+    });
+
+    setSaveStatus("Unsaved Changes");
+
+    saveTimerRef.current = setTimeout(() => {
+      performSave();
+    }, DEBOUNCE_MS);
+  }, [performSave]);
+
   const openNote = useCallback(
     (id: string) => {
+      if (id === appState.currentNoteId) return;
+
+      if (saveTimerRef.current !== null) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+
+      const currentId = appState.currentNoteId;
+      if (currentId && saveStatus === "Unsaved Changes" && !isTemporaryNoteId(currentId)) {
+        const title = titleRef.current?.value || DEFAULT_TITLE;
+        const content = editorRef.current?.getHTML() || "";
+        cacheService.updateNote(currentId, { title, content });
+      }
+
       notesService.open(id);
     },
-    [],
+    [saveStatus],
   );
 
   const deleteNote = useCallback(
@@ -173,43 +231,6 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     },
     [syncFromAppState],
   );
-
-  const scheduleSave = useCallback(() => {
-    if (saveTimerRef.current !== null) {
-      clearTimeout(saveTimerRef.current);
-    }
-
-    const draftTitle = titleRef.current?.value || DEFAULT_TITLE;
-    const draftContent = contentRef.current?.value || "";
-    const currentId = appState.currentNoteId;
-
-    cacheService.updateNote(currentId, {
-      title: draftTitle,
-      content: draftContent,
-    });
-    setSaveStatus("Saving...");
-
-    saveTimerRef.current = setTimeout(() => {
-      const id = appState.currentNoteId;
-      if (!id || id.startsWith("temp-")) {
-        setSaveStatus("Saved");
-        return;
-      }
-
-      if (appState.isSaving) {
-        appState.hasPendingSave = true;
-        return;
-      }
-
-      const payload = {
-        title: titleRef.current?.value || DEFAULT_TITLE,
-        content: contentRef.current?.value || "",
-      };
-      notesService.save(payload).then(() => {
-        syncFromAppState();
-      });
-    }, DEBOUNCE_MS);
-  }, [syncFromAppState]);
 
   const onTitleChange = useCallback(() => {
     scheduleSave();
@@ -229,7 +250,7 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     noteLoading,
     authError,
     titleRef,
-    contentRef,
+    editorRef,
     login,
     createNote,
     openNote,

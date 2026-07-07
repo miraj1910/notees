@@ -9,6 +9,20 @@ interface NoteCardProps {
   isActive: boolean;
 }
 
+function formatTimestamp(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export default function NoteCard({ note, isActive }: NoteCardProps) {
   const { openNote, deleteNote } = useNotes();
 
@@ -35,9 +49,7 @@ export default function NoteCard({ note, isActive }: NoteCardProps) {
   );
 
   const title = note.title || "Untitled";
-  const preview = note.content
-    ? note.content.replace(/<[^>]*>/g, "").slice(0, 80)
-    : "No content yet";
+  const time = formatTimestamp(new Date(note.updatedAt || note.createdAt));
 
   return (
     <div
@@ -45,46 +57,50 @@ export default function NoteCard({ note, isActive }: NoteCardProps) {
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className={`group w-full text-left px-4 py-3.5 rounded-[--radius-card] border transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8835D]/40 ${
-        isActive
-          ? "bg-white border-[rgba(184,131,93,0.3)] shadow-sm"
-          : "bg-white/60 border-transparent hover:bg-white hover:border-[rgba(0,0,0,0.06)] hover:shadow-sm"
-      }`}
+      className={`note-card ${isActive ? "active" : ""}`}
       aria-current={isActive ? "true" : undefined}
       aria-label={`Open note: ${title}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-semibold text-[#2D2623] truncate leading-snug">
-            {title}
-          </h3>
-          {note.content !== null && (
-            <p className="text-[13px] text-[#7A6F67] mt-1 line-clamp-2 leading-relaxed">
-              {preview}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={handleDelete}
-          className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#7A6F67] hover:text-[#D95858] hover:bg-[rgba(217,88,88,0.08)] transition-colors duration-150 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100"
-          aria-label={`Delete note: ${title}`}
-          tabIndex={-1}
+      <div className="note-card-icon">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          </svg>
-        </button>
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+        </svg>
       </div>
+
+      <div className="note-card-body">
+        <div className="note-card-title">{title}</div>
+        <div className="note-card-time">{time}</div>
+      </div>
+
+      <button
+        onClick={handleDelete}
+        className="note-card-menu"
+        aria-label={`Delete note: ${title}`}
+        tabIndex={-1}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <circle cx="12" cy="5" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
+        </svg>
+      </button>
     </div>
   );
 }

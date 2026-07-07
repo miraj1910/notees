@@ -1,38 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-base: #f7f2ec;
-  --color-bg-card: #fdfbf8;
-  --color-bg-elevated: rgba(255, 255, 255, 0.7);
-  --color-text-primary: #2d2623;
-  --color-text-secondary: #7a6f67;
-  --color-accent: #b8835d;
-  --color-accent-light: #d4a574;
-  --color-accent-dark: #9a6b4a;
-  --color-border-subtle: rgba(0, 0, 0, 0.06);
-  --color-border-light: rgba(0, 0, 0, 0.1);
-  --color-danger: #d95858;
-
+  --font-caveat: "Caveat", cursive;
+  --font-patrick: "Patrick Hand", cursive;
+  --font-kalam: "Kalam", cursive;
   --font-serif: "Playfair Display", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
-
-  --radius-card: 1.25rem;
-  --radius-panel: 1rem;
-  --radius-pill: 9999px;
-
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
 
 @layer base {
-  * {
+  *, *::before, *::after {
     box-sizing: border-box;
   }
 
-  html,
-  body {
+  html, body {
     margin: 0;
     height: 100%;
     min-height: 100%;
@@ -42,30 +24,28 @@
     position: relative;
     min-height: 100dvh;
     overflow: hidden;
-    background: var(--color-bg-base);
-    color: var(--color-text-primary);
-    font-family: var(--font-sans);
+    background: #F8F5F1;
+    color: #2F2923;
+    font-family: "Inter", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  button,
-  input,
-  textarea {
+  button, input, textarea {
     font: inherit;
   }
 
   button {
     border: 0;
+    cursor: pointer;
   }
 
   ::selection {
     background: rgba(184, 131, 93, 0.2);
   }
 
-  /* Scrollbar styling */
   ::-webkit-scrollbar {
-    width: 0.5rem;
+    width: 0.35rem;
   }
 
   ::-webkit-scrollbar-track {
@@ -73,58 +53,201 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.06);
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.12);
   }
 }
 
-@layer utilities {
-  .hidden {
-    display: none !important;
-  }
-
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
+/* TipTap Styles */
+.ProseMirror {
+  outline: none;
+  min-height: 250px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  font-family: "Caveat", cursive;
+  font-size: 19px;
+  line-height: 1.8;
+  color: #2F2923;
 }
 
-.ambient {
-  position: fixed;
-  inset: auto;
-  width: 32rem;
-  height: 32rem;
-  border-radius: 50%;
-  filter: blur(80px);
+.ProseMirror p {
+  margin: 0;
+}
+
+.ProseMirror p + p {
+  margin-top: 0.5em;
+}
+
+.ProseMirror > * + * {
+  margin-top: 0.5em;
+}
+
+.ProseMirror h2 {
+  font-family: "Caveat", cursive;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.3em 0;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin-bottom: 0.15em;
+}
+
+.ProseMirror li p {
+  margin: 0;
+}
+
+.ProseMirror s {
+  text-decoration: line-through;
+}
+
+.ProseMirror em {
+  font-style: italic;
+}
+
+.ProseMirror strong {
+  font-weight: 700;
+}
+
+.ProseMirror a {
+  color: #4A7DB4;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #5A8DC4;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid #C04B3C;
+  padding-left: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  color: rgba(47, 41, 35, 0.7);
+  font-style: italic;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgba(122, 111, 103, 0.2);
   pointer-events: none;
-  opacity: 0.15;
+  height: 0;
+  font-family: "Caveat", cursive;
 }
 
-.ambient-left {
-  top: -8rem;
-  left: -10rem;
-  background: rgba(184, 131, 93, 0.2);
+/* Task list styles */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
 }
 
-.ambient-right {
-  right: -8rem;
-  bottom: -10rem;
-  background: rgba(154, 107, 74, 0.15);
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0;
 }
 
-.eyebrow {
-  margin: 0 0 0.5rem;
-  color: var(--color-accent);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #555;
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background: #4A7DB4;
+  border-color: #4A7DB4;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  top: -2px;
+  left: 1px;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div > p {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Selection */
+.ProseMirror ::selection,
+.ProseMirror::selection {
+  background: rgba(210, 180, 140, 0.3);
+}
+
+.ProseMirror .ProseMirror-cursor {
+  border-left: 2px solid #2F2923;
+}
+
+/* TipTap heading overrides */
+.ProseMirror h2 {
+  font-family: "Caveat", cursive;
+  font-size: 28px;
+  font-weight: 600;
+  color: #2F2923;
+}
+
+/* Colored headings */
+.ProseMirror h2:first-of-type {
+  text-decoration-color: #8E6D4F;
+}
+
+/* Demo content specific styles */
+.ProseMirror h2:nth-of-type(2) {
+  text-decoration-color: #C04B3C;
+}
+
+.ProseMirror h2:nth-of-type(3) {
+  text-decoration-color: #4A7DB4;
+}
+
+@media (max-width: 768px) {
+  .ProseMirror {
+    font-size: 17px;
+  }
 }

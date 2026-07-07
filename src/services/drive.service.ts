@@ -64,7 +64,7 @@ export const driveService = {
 
   async listNotes(): Promise<DriveFile[]> {
     const data = await this.get<DriveListResponse>(
-      `${DRIVE_API_BASE}?q=mimeType='${MIME_TYPE}'&spaces=drive&fields=files(id,name)`,
+      `${DRIVE_API_BASE}?q=mimeType='${MIME_TYPE}'&spaces=drive&fields=files(id,name,createdTime,modifiedTime)`,
     );
     return Array.isArray(data.files) ? data.files : [];
   },

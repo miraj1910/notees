@@ -2,6 +2,25 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { appState } from "../../src/state/app-state.js";
 import { cacheService } from "../../src/services/cache.service.js";
 
+const ts = "2025-01-01T00:00:00.000Z";
+
+function note(overrides: Partial<{
+  id: string;
+  title: string;
+  content: string | null;
+  createdAt: string;
+  updatedAt: string;
+}> = {}) {
+  return {
+    id: "1",
+    title: "Note",
+    content: null as string | null,
+    createdAt: ts,
+    updatedAt: ts,
+    ...overrides,
+  };
+}
+
 describe("cacheService", () => {
   beforeEach(() => {
     appState.notesCache = [];
@@ -13,8 +32,8 @@ describe("cacheService", () => {
 
   it("stores and retrieves notes", () => {
     cacheService.setNotes([
-      { id: "1", title: "Note 1", content: null },
-      { id: "2", title: "Note 2", content: "hello" },
+      note({ id: "1", title: "Note 1", content: null }),
+      note({ id: "2", title: "Note 2", content: "hello" }),
     ]);
 
     expect(cacheService.getNotes()).toHaveLength(2);
@@ -22,7 +41,7 @@ describe("cacheService", () => {
   });
 
   it("finds a note by id", () => {
-    cacheService.setNotes([{ id: "abc", title: "Test", content: "content" }]);
+    cacheService.setNotes([note({ id: "abc", title: "Test", content: "content" })]);
 
     const found = cacheService.findNote("abc");
     expect(found).toBeDefined();
@@ -30,32 +49,34 @@ describe("cacheService", () => {
   });
 
   it("returns undefined for missing note", () => {
-    cacheService.setNotes([{ id: "abc", title: "Test", content: null }]);
+    cacheService.setNotes([note({ id: "abc", title: "Test" })]);
 
     expect(cacheService.findNote("nonexistent")).toBeUndefined();
   });
 
   it("updates a note by id", () => {
-    cacheService.setNotes([{ id: "1", title: "Old", content: null }]);
+    cacheService.setNotes([note({ id: "1", title: "Old" })]);
 
     cacheService.updateNote("1", { title: "Updated", content: "new content" });
-    const note = cacheService.findNote("1");
-    expect(note?.title).toBe("Updated");
-    expect(note?.content).toBe("new content");
+    const found = cacheService.findNote("1");
+    expect(found?.title).toBe("Updated");
+    expect(found?.content).toBe("new content");
   });
 
   it("ignores update when id is null", () => {
-    cacheService.setNotes([{ id: "1", title: "Test", content: null }]);
+    cacheService.setNotes([note({ id: "1", title: "Test" })]);
     cacheService.updateNote(null, { title: "Nope" });
     expect(cacheService.findNote("1")?.title).toBe("Test");
   });
 
   it("adds optimistic note to front", () => {
-    cacheService.setNotes([{ id: "existing", title: "Existing", content: null }]);
+    cacheService.setNotes([note({ id: "existing", title: "Existing" })]);
     cacheService.addOptimistic({
       id: "temp-1",
       title: "New",
       content: "",
+      createdAt: ts,
+      updatedAt: ts,
     });
 
     expect(cacheService.getNotes()).toHaveLength(2);
@@ -63,18 +84,18 @@ describe("cacheService", () => {
   });
 
   it("replaces temp id with real id", () => {
-    cacheService.setNotes([{ id: "temp-1", title: "New", content: "" }]);
+    cacheService.setNotes([note({ id: "temp-1", title: "New", content: "" })]);
     cacheService.replaceId("temp-1", "real-id-123");
 
-    const note = cacheService.findNote("real-id-123");
-    expect(note).toBeDefined();
+    const found = cacheService.findNote("real-id-123");
+    expect(found).toBeDefined();
     expect(cacheService.findNote("temp-1")).toBeUndefined();
   });
 
   it("removes a note", () => {
     cacheService.setNotes([
-      { id: "1", title: "A", content: null },
-      { id: "2", title: "B", content: null },
+      note({ id: "1", title: "A" }),
+      note({ id: "2", title: "B" }),
     ]);
     cacheService.removeNote("1");
 
@@ -83,7 +104,7 @@ describe("cacheService", () => {
   });
 
   it("creates a snapshot that is independent of the cache", () => {
-    cacheService.setNotes([{ id: "1", title: "Original", content: null }]);
+    cacheService.setNotes([note({ id: "1", title: "Original" })]);
     const snap = cacheService.snapshotNotes();
     cacheService.setNotes([]);
 

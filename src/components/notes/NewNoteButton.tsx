@@ -9,12 +9,12 @@ export default function NewNoteButton() {
     <button
       onClick={createNote}
       disabled={isCreatingNote}
-      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[--radius-card] bg-[#B8835D] text-white font-medium text-sm hover:bg-[#D4A574] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+      className="sidebar-new-btn"
       aria-label="Create new note"
     >
       <svg
-        width="16"
-        height="16"
+        width="15"
+        height="15"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

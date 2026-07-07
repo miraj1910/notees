@@ -14,7 +14,7 @@ export const noteState = {
     return appState.findCachedNote(id);
   },
 
-  update(id: string | null, updates: Partial<Pick<Note, "title" | "content">>): void {
+  update(id: string | null, updates: Partial<Pick<Note, "title" | "content" | "updatedAt">>): void {
     appState.updateCachedNote(id, updates);
   },
 

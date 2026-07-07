@@ -8,28 +8,26 @@ export default function NotesList() {
 
   return (
     <div
-      className="flex-1 overflow-y-auto no-scrollbar -mx-1 px-1"
+      className="sidebar-notes-list"
       role="list"
       aria-label="Notes list"
     >
-      <div className="flex flex-col gap-2 py-2">
-        {notes.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-[#7A6F67]">No notes yet</p>
-            <p className="text-xs text-[#7A6F67] mt-1">
-              Create one to get started
-            </p>
-          </div>
-        ) : (
-          notes.map((note) => (
+      {notes.length === 0 ? (
+        <div className="sidebar-no-notes">
+          <p className="sidebar-no-notes-text">No notes yet</p>
+          <p className="sidebar-no-notes-sub">Create one to get started</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1 py-1">
+          {notes.map((note) => (
             <NoteCard
               key={note.id}
               note={note}
               isActive={note.id === currentNoteId}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

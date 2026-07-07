@@ -57,7 +57,7 @@ class AppState {
 
   updateCachedNote(
     id: string | null,
-    updates: Partial<Pick<Note, "title" | "content">>,
+    updates: Partial<Pick<Note, "title" | "content" | "updatedAt">>,
   ): void {
     if (!id) return;
     this.notesCache = this.notesCache.map((note) =>
