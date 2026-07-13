@@ -5,6 +5,7 @@ export const DEFAULT_TITLE_NOTE = "Untitled note";
 export const TEMP_PREFIX = "temp-";
 
 export const MIME_TYPE = "application/json";
+export const NOTES_FILE_NAME = "notes.json";
 
 export const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
 export const DRIVE_UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3/files";

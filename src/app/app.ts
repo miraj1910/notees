@@ -116,7 +116,7 @@ export class App {
 
   private queueSave(): void {
     const id = appState.currentNoteId;
-    if (!id || id.startsWith("temp-")) return;
+    if (!id) return;
 
     if (appState.isSaving) {
       appState.hasPendingSave = true;
@@ -128,7 +128,7 @@ export class App {
 
   private async executeSave(): Promise<void> {
     const id = appState.currentNoteId;
-    if (!id || id.startsWith("temp-") || appState.isSaving) return;
+    if (!id || appState.isSaving) return;
 
     const payload: NoteData = {
       title: editor.getTitle(),

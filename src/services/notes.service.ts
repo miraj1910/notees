@@ -2,13 +2,17 @@ import type { Note, NoteData } from "../types/note";
 import { appState } from "../state/app-state";
 import { cacheService } from "./cache.service";
 import { driveService } from "./drive.service";
-import { DEFAULT_TITLE, TEMP_PREFIX } from "../config/constants";
-import { isTemporaryNoteId } from "../utils/validation";
+import { DEFAULT_TITLE } from "../config/constants";
 import { logger } from "../utils/logger";
 
 type StatusCallback = (status: string) => void;
 
+function generateId(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
 class NotesService {
+  private notesFileId: string | null = null;
   private onStatus: StatusCallback | null = null;
   private onNotesChanged: (() => void) | null = null;
   private onNoteOpened: ((note: { title: string; content: string }) => void) | null =
@@ -32,14 +36,10 @@ class NotesService {
 
   async loadAll(): Promise<void> {
     try {
-      const files = await driveService.listNotes();
-      const notes: Note[] = files.map((file) => ({
-        id: file.id,
-        title: file.name || DEFAULT_TITLE,
-        content: null,
-        createdAt: file.createdTime || new Date().toISOString(),
-        updatedAt: file.modifiedTime || new Date().toISOString(),
-      }));
+      const file = await driveService.findOrCreateNotesFile();
+      this.notesFileId = file.id;
+
+      const notes = await driveService.downloadAllNotes(file.id);
       cacheService.setNotes(notes);
       this.onNotesChanged?.();
       this.onStatus?.("Ready");
@@ -50,60 +50,21 @@ class NotesService {
   }
 
   async open(id: string): Promise<void> {
-    const requestId = appState.nextOpenRequestId();
-    appState.abortActiveRequest();
-    const controller = appState.setNewController();
+    appState.currentNoteId = id;
+    this.onNotesChanged?.();
 
-    try {
-      appState.currentNoteId = id;
-      this.onNotesChanged?.();
-
-      const cachedNote = cacheService.findNote(id);
-      const initialTitle = cachedNote?.title || DEFAULT_TITLE;
-
-      this.onEditorLoading?.(false);
-
-      if (cachedNote && cachedNote.content !== null) {
-        this.onNoteOpened?.({
-          title: initialTitle,
-          content: cachedNote.content,
-        });
-        this.onStatus?.("Loaded");
-        return;
-      }
-
-      this.onEditorLoading?.(true);
-      this.onStatus?.("Loading note...");
-
-      const note = await driveService.getNoteContent(id, {
-        signal: controller.signal,
-      });
-
-      cacheService.updateNote(id, {
-        title: note.title || cachedNote?.title || DEFAULT_TITLE,
-        content: note.content || "",
-      });
-
-      if (requestId !== appState.activeOpenRequestId || appState.currentNoteId !== id) {
-        return;
-      }
-
-      this.onEditorLoading?.(false);
-      this.onNoteOpened?.({
-        title: note.title || cachedNote?.title || DEFAULT_TITLE,
-        content: note.content || "",
-      });
-      this.onStatus?.("Loaded");
-    } catch (error) {
-      if ((error as Error).name === "AbortError") return;
-      logger.error(error);
-      if (requestId === appState.activeOpenRequestId) {
-        this.onEditorLoading?.(false);
-        this.onStatus?.("Failed to open note");
-      }
-    } finally {
-      appState.clearActiveController(requestId);
+    const note = cacheService.findNote(id);
+    if (!note) {
+      this.onStatus?.("Note not found");
+      return;
     }
+
+    this.onEditorLoading?.(false);
+    this.onNoteOpened?.({
+      title: note.title || DEFAULT_TITLE,
+      content: note.content || "",
+    });
+    this.onStatus?.("Loaded");
   }
 
   async create(): Promise<void> {
@@ -112,11 +73,11 @@ class NotesService {
     appState.isCreatingNote = true;
     this.onStatus?.("Creating...");
 
-    const tempId = `${TEMP_PREFIX}${Date.now()}`;
+    const id = generateId();
     const now = new Date().toISOString();
-    appState.currentNoteId = tempId;
+    appState.currentNoteId = id;
     cacheService.addOptimistic({
-      id: tempId,
+      id,
       title: DEFAULT_TITLE,
       content: "",
       createdAt: now,
@@ -128,20 +89,13 @@ class NotesService {
     this.onNotesChanged?.();
 
     try {
-      const file = await driveService.createFile();
-      await driveService.uploadContent(file.id, {
-        title: DEFAULT_TITLE,
-        content: "",
-      });
-
-      appState.currentNoteId = file.id;
-      cacheService.replaceId(tempId, file.id);
+      await this.saveAllToDrive();
       this.onNotesChanged?.();
       this.onStatus?.("New note ready");
     } catch (error) {
       logger.error(error);
-      cacheService.removeNote(tempId);
-      if (appState.currentNoteId === tempId) {
+      cacheService.removeNote(id);
+      if (appState.currentNoteId === id) {
         appState.currentNoteId = null;
         this.onEditorReset?.();
       }
@@ -152,15 +106,25 @@ class NotesService {
     }
   }
 
-  private async performSave(id: string, payload: NoteData): Promise<void> {
+  private async saveAllToDrive(): Promise<void> {
+    if (!this.notesFileId) throw new Error("No notes file ID");
+    await driveService.uploadAllNotes(this.notesFileId, cacheService.getNotes());
+  }
+
+  async save(payload: NoteData): Promise<void> {
+    const id = appState.currentNoteId;
+    if (!id || !this.notesFileId) return;
+
     appState.isSaving = true;
 
     try {
-      await driveService.saveNoteContent(id, payload);
       cacheService.updateNote(id, {
-        ...payload,
+        title: payload.title,
+        content: payload.content,
         updatedAt: new Date().toISOString(),
       });
+
+      await this.saveAllToDrive();
       this.onStatus?.("Saved");
     } catch (error) {
       logger.error(error);
@@ -177,25 +141,12 @@ class NotesService {
 
   private flushPendingSave(): void {
     const id = appState.currentNoteId;
-    if (!id || isTemporaryNoteId(id)) return;
+    if (!id || !this.notesFileId) return;
 
-    const payload: NoteData = {
-      title: DEFAULT_TITLE,
-      content: "",
-    };
-    this.performSave(id, payload);
-  }
+    const note = cacheService.findNote(id);
+    if (!note) return;
 
-  async save(payload: NoteData): Promise<void> {
-    const id = appState.currentNoteId;
-    if (!id || isTemporaryNoteId(id) || appState.isSaving) {
-      if (id && !isTemporaryNoteId(id) && appState.isSaving) {
-        appState.hasPendingSave = true;
-      }
-      return;
-    }
-
-    await this.performSave(id, payload);
+    this.save({ title: note.title, content: note.content || "" });
   }
 
   async remove(id: string): Promise<boolean> {
@@ -213,12 +164,12 @@ class NotesService {
     this.onNotesChanged?.();
 
     try {
-      if (isTemporaryNoteId(id)) {
+      if (!this.notesFileId) {
         this.onStatus?.("Deleted");
         return true;
       }
 
-      await driveService.delete(id);
+      await this.saveAllToDrive();
       this.onStatus?.("Deleted");
       return true;
     } catch (error) {

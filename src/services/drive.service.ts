@@ -1,82 +1,99 @@
-import type { NoteData } from "../types/note";
-import type { DriveFile, DriveListResponse, DriveOptions } from "../types/drive";
+import type { Note } from "../types/note";
+import type { DriveFile, DriveListResponse } from "../types/drive";
 import { appState } from "../state/app-state";
-import { DRIVE_API_BASE, DRIVE_UPLOAD_BASE, MIME_TYPE } from "../config/constants";
+import { DRIVE_API_BASE, DRIVE_UPLOAD_BASE, MIME_TYPE, NOTES_FILE_NAME } from "../config/constants";
+import { logger } from "../utils/logger";
+
+async function assertOk(res: Response): Promise<Response> {
+  if (!res.ok) {
+    const body = await res.text().catch(() => "Unknown error");
+    throw new Error(`Drive API ${res.status}: ${body}`);
+  }
+  return res;
+}
 
 export const driveService = {
-  async get<T>(url: string, options?: DriveOptions): Promise<T> {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${appState.token}` },
-      signal: options?.signal,
-    });
-    return res.json() as Promise<T>;
-  },
-
-  async patch<T = void>(url: string, body: NoteData): Promise<T> {
-    const res = await fetch(url, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${appState.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    return res.json() as Promise<T>;
-  },
-
-  async updateMetadata<T = void>(id: string, body: { name: string }): Promise<T> {
-    const res = await fetch(`${DRIVE_API_BASE}/${id}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${appState.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    return res.json() as Promise<T>;
-  },
-
-  async delete(id: string): Promise<Response> {
-    return fetch(`${DRIVE_API_BASE}/${id}`, {
-      method: "DELETE",
+  async findOrCreateNotesFile(): Promise<DriveFile> {
+    const searchUrl =
+      `${DRIVE_API_BASE}?q=name='${NOTES_FILE_NAME}'` +
+      `&spaces=appDataFolder` +
+      `&fields=files(id,name,createdTime,modifiedTime)`;
+    const searchRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${appState.token}` },
     });
-  },
+    const data: DriveListResponse = await assertOk(searchRes).then((r) => r.json());
 
-  async createFile(): Promise<DriveFile> {
-    const res = await fetch(`${DRIVE_API_BASE}?fields=id`, {
+    if (Array.isArray(data.files) && data.files.length > 0) {
+      const sorted = data.files.sort(
+        (a, b) =>
+          new Date(b.createdTime || 0).getTime() - new Date(a.createdTime || 0).getTime(),
+      );
+      return sorted[0];
+    }
+
+    const createRes = await fetch(`${DRIVE_API_BASE}?fields=id`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${appState.token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: "Untitled",
+        name: NOTES_FILE_NAME,
         mimeType: MIME_TYPE,
+        parents: ["appDataFolder"],
       }),
     });
-    return res.json() as Promise<DriveFile>;
+    const file: DriveFile = await assertOk(createRes).then((r) => r.json());
+
+    const initRes = await fetch(`${DRIVE_UPLOAD_BASE}/${file.id}?uploadType=media`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${appState.token}`,
+        "Content-Type": MIME_TYPE,
+      },
+      body: JSON.stringify([]),
+    });
+    await assertOk(initRes);
+
+    return file;
   },
 
-  async uploadContent(id: string, data: NoteData): Promise<void> {
-    await this.patch(`${DRIVE_UPLOAD_BASE}/${id}?uploadType=media`, data);
+  async downloadAllNotes(fileId: string): Promise<Note[]> {
+    const res = await fetch(`${DRIVE_API_BASE}/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${appState.token}` },
+    });
+    const text = await assertOk(res).then((r) => r.text());
+
+    try {
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) {
+        logger.warn("notes.json content is not an array, resetting");
+        return [];
+      }
+      return data as Note[];
+    } catch {
+      logger.warn("Failed to parse notes.json, starting fresh");
+      return [];
+    }
   },
 
-  async listNotes(): Promise<DriveFile[]> {
-    const data = await this.get<DriveListResponse>(
-      `${DRIVE_API_BASE}?q=mimeType='${MIME_TYPE}'&spaces=drive&fields=files(id,name,createdTime,modifiedTime)`,
-    );
-    return Array.isArray(data.files) ? data.files : [];
+  async uploadAllNotes(fileId: string, notes: Note[]): Promise<void> {
+    const res = await fetch(`${DRIVE_UPLOAD_BASE}/${fileId}?uploadType=media`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${appState.token}`,
+        "Content-Type": MIME_TYPE,
+      },
+      body: JSON.stringify(notes),
+    });
+    await assertOk(res);
   },
 
-  async getNoteContent(id: string, options?: DriveOptions): Promise<NoteData> {
-    return this.get<NoteData>(`${DRIVE_API_BASE}/${id}?alt=media`, options);
-  },
-
-  async saveNoteContent(id: string, payload: NoteData): Promise<void> {
-    await Promise.all([
-      this.uploadContent(id, payload),
-      this.updateMetadata(id, { name: payload.title }),
-    ]);
+  async delete(id: string): Promise<void> {
+    const res = await fetch(`${DRIVE_API_BASE}/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${appState.token}` },
+    });
+    await assertOk(res);
   },
 };
